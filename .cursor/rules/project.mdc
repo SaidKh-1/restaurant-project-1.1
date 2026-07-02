@@ -1,0 +1,57 @@
+---
+description: Core rules for the Arabic-first seafood restaurant CMS platform
+alwaysApply: true
+---
+
+# Project Rules
+
+## Project Identity
+
+This project is a reusable Arabic-first Restaurant CMS Platform. The first implementation is for a seafood restaurant.
+
+## Language And Routing
+
+- Arabic is the default and primary language.
+- The public website opens in Arabic by default.
+- Default public route is `/ar`.
+- English public route is `/en`.
+- Arabic pages use RTL.
+- English pages use LTR.
+- Admin dashboard is Arabic-first.
+- Admin dashboard can support English later.
+- Every editable public content field must support Arabic and English.
+
+## CMS Rules
+
+- Do not permanently hardcode restaurant text in application code.
+- Restaurant content should come from database records or admin settings when possible.
+- Seafood-specific content should be configurable so the platform remains reusable.
+- Manager image, logo, favicon, hero images, theme, SEO, menu, offers, gallery, reviews, reservations, messages, and contact settings are owner-managed concepts.
+
+## Seafood Menu Rules
+
+- Default seafood categories: الأسماك الطازجة، المأكولات البحرية، الأطباق الخاصة، طرق الطهي، خدمات المطعم.
+- Menu items support `nameAr`, `nameEn`, `descriptionAr`, and `descriptionEn`.
+- Menu items can have multiple price variants.
+- Variants support `nameAr`, `nameEn`, `price`, and `unit`.
+- Supported units include كجم، حبة، طبق، صغير، كبير.
+- Cooking methods are dynamic and editable from admin.
+- Admin can hide unavailable items and mark featured items.
+
+## Security And SEO Rules
+
+- Admin login is required.
+- Admin pages are protected.
+- Use roles and permissions.
+- Validate all forms.
+- Reviews are not public until approved.
+- Customer email and phone data must never appear publicly.
+- Arabic SEO is primary; English SEO is supported.
+- Support `sitemap.xml`, `robots.txt`, JSON-LD structured data, and Open Graph.
+
+## Implementation Discipline
+
+- Do not modify application code during documentation-only tasks.
+- Do not modify the `app` folder unless the user explicitly requests implementation.
+- Do not install packages or modify `package.json` unless explicitly requested.
+- Before writing Next.js application code, read the relevant guide in `node_modules/next/dist/docs/`.

@@ -1,0 +1,1075 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Locale {
+  AR @map("ar")
+  EN @map("en")
+}
+
+enum RestaurantStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum CmsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum MediaUsageType {
+  LOGO
+  FAVICON
+  HERO
+  MENU_ITEM
+  OFFER
+  GALLERY
+  MANAGER
+  REVIEW
+  OPEN_GRAPH
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ARCHIVED
+  DELETED
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  ARCHIVED
+  DELETED
+}
+
+enum ReservationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum PublicReviewNameMode {
+  FULL
+  FIRST_NAME
+  SHORTENED
+}
+
+enum ReviewPhoneMode {
+  OPTIONAL
+  REQUIRED
+  HIDDEN
+}
+
+enum MenuUnit {
+  KILOGRAM @map("كجم")
+  PIECE    @map("حبة")
+  PLATE    @map("طبق")
+  SMALL    @map("صغير")
+  LARGE    @map("كبير")
+}
+
+enum DayOfWeek {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
+enum SeoEntityType {
+  PAGE
+  MENU_CATEGORY
+  MENU_ITEM
+  OFFER
+  GALLERY
+  REVIEW_PAGE
+  ABOUT
+  MANAGER
+  CONTACT
+}
+
+enum StructuredDataType {
+  RESTAURANT
+  LOCAL_BUSINESS
+  MENU
+  MENU_ITEM
+  OFFER
+  REVIEW
+  AGGREGATE_RATING
+  BREADCRUMB_LIST
+  IMAGE_OBJECT
+}
+
+enum ChangeFrequency {
+  ALWAYS
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  NEVER
+}
+
+model Restaurant {
+  id               String           @id @default(cuid())
+  slug             String           @unique
+  defaultLocale    Locale           @default(AR)
+  isEnglishEnabled Boolean          @default(false)
+  timezone         String           @default("Asia/Qatar")
+  currencyCode     String           @default("QAR")
+  status           RestaurantStatus @default(ACTIVE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  translations      RestaurantTranslation[]
+  settings          RestaurantSettings?
+  contactSettings   RestaurantContactSettings?
+  socialLinks       RestaurantSocialLink[]
+  openingHours      RestaurantOpeningHour[]
+  locations         RestaurantLocation[]
+  managerProfile    ManagerProfile?
+  mediaAssets       MediaAsset[]
+  themeSettings     ThemeSettings?
+  homepageSections  HomepageSection[]
+  heroSlides        HeroSlide[]
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
+  cookingMethods    CookingMethod[]
+  offers            Offer[]
+  galleryCategories GalleryCategory[]
+  galleryImages     GalleryImage[]
+  seoEntries        SeoEntry[]
+  reviews           Review[]
+  contactMessages   ContactMessage[]
+  reservations      Reservation[]
+  users             User[]
+  roles             Role[]
+  auditLogs         AuditLog[]
+
+  @@map("restaurants")
+}
+
+model RestaurantTranslation {
+  id               String   @id @default(cuid())
+  restaurantId     String
+  locale           Locale
+  name             String
+  description      String?
+  shortDescription String?
+  addressText      String?
+  cuisineText      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, locale])
+  @@map("restaurant_translations")
+}
+
+model RestaurantSettings {
+  id                             String               @id @default(cuid())
+  restaurantId                   String               @unique
+  defaultPublicRoute             String               @default("/ar")
+  englishPublicRoute             String               @default("/en")
+  homepageSectionsReorderEnabled Boolean              @default(false)
+  reviewsRequireApproval         Boolean              @default(true)
+  reviewPhoneMode                ReviewPhoneMode      @default(OPTIONAL)
+  publicReviewNameMode           PublicReviewNameMode @default(SHORTENED)
+  reservationsEnabled            Boolean              @default(true)
+  messagesEnabled                Boolean              @default(true)
+  reviewsEnabled                 Boolean              @default(true)
+  createdAt                      DateTime             @default(now())
+  updatedAt                      DateTime             @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("restaurant_settings")
+}
+
+model RestaurantContactSettings {
+  id                   String   @id @default(cuid())
+  restaurantId         String   @unique
+  phone                String?
+  whatsappNumber       String?
+  email                String?
+  reservationPhone     String?
+  publicContactEnabled Boolean  @default(true)
+  whatsappEnabled      Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("restaurant_contact_settings")
+}
+
+model RestaurantSocialLink {
+  id           String   @id @default(cuid())
+  restaurantId String
+  platform     String
+  url          String
+  label        String?
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, isActive, sortOrder])
+  @@map("restaurant_social_links")
+}
+
+model RestaurantOpeningHour {
+  id           String    @id @default(cuid())
+  restaurantId String
+  dayOfWeek    DayOfWeek
+  opensAt      String?
+  closesAt     String?
+  isClosed     Boolean   @default(false)
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, dayOfWeek])
+  @@map("restaurant_opening_hours")
+}
+
+model RestaurantLocation {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  label         String?
+  googleMapsUrl String?
+  latitude      Decimal? @db.Decimal(10, 7)
+  longitude     Decimal? @db.Decimal(10, 7)
+  isPrimary     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, isPrimary, isActive])
+  @@map("restaurant_locations")
+}
+
+model ManagerProfile {
+  id           String   @id @default(cuid())
+  restaurantId String   @unique
+  imageAssetId String?
+  isVisible    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant   Restaurant                  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  imageAsset   MediaAsset?                 @relation("ManagerImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  translations ManagerProfileTranslation[]
+
+  @@map("manager_profiles")
+}
+
+model ManagerProfileTranslation {
+  id               String   @id @default(cuid())
+  managerProfileId String
+  locale           Locale
+  name             String
+  title            String?
+  bio              String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  managerProfile ManagerProfile @relation(fields: [managerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([managerProfileId, locale])
+  @@map("manager_profile_translations")
+}
+
+model MediaAsset {
+  id               String         @id @default(cuid())
+  restaurantId     String
+  storageKey       String         @unique
+  publicUrl        String
+  mimeType         String
+  fileSize         Int
+  width            Int?
+  height           Int?
+  originalFilename String?
+  usageType        MediaUsageType @default(OTHER)
+  uploadedById     String?
+  status           MediaStatus    @default(ACTIVE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  restaurant              Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  uploadedBy              User?              @relation("UploadedMedia", fields: [uploadedById], references: [id], onDelete: SetNull)
+  translations            MediaTranslation[]
+  managerProfiles         ManagerProfile[]   @relation("ManagerImage")
+  logoThemeSettings       ThemeSettings[]    @relation("ThemeLogo")
+  coverImageThemeSettings ThemeSettings[]    @relation("ThemeCoverImage")
+  faviconThemeSettings    ThemeSettings[]    @relation("ThemeFavicon")
+  defaultOgThemeSettings  ThemeSettings[]    @relation("ThemeDefaultOg")
+  heroSlides              HeroSlide[]        @relation("HeroImage")
+  menuCategoryImages      MenuCategory[]     @relation("MenuCategoryImage")
+  menuItemImages          MenuItem[]         @relation("MenuItemImage")
+  offerImages             Offer[]            @relation("OfferImage")
+  galleryImages           GalleryImage[]     @relation("GalleryImageAsset")
+  reviewImages            Review[]           @relation("ReviewImage")
+  seoOgImages             SeoEntry[]         @relation("SeoOgImage")
+
+  @@index([restaurantId, status, usageType])
+  @@map("media_assets")
+}
+
+model MediaTranslation {
+  id           String   @id @default(cuid())
+  mediaAssetId String
+  locale       Locale
+  altText      String?
+  caption      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaAssetId, locale])
+  @@map("media_translations")
+}
+
+model ThemeSettings {
+  id                    String   @id @default(cuid())
+  restaurantId          String   @unique
+  primaryColor          String?
+  secondaryColor        String?
+  buttonColor           String?
+  headerColor           String?
+  footerColor           String?
+  logoAssetId           String?
+  coverImageAssetId     String?
+  faviconAssetId        String?
+  defaultOgImageAssetId String?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  restaurant          Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  logoAsset           MediaAsset? @relation("ThemeLogo", fields: [logoAssetId], references: [id], onDelete: SetNull)
+  coverImageAsset     MediaAsset? @relation("ThemeCoverImage", fields: [coverImageAssetId], references: [id], onDelete: SetNull)
+  faviconAsset        MediaAsset? @relation("ThemeFavicon", fields: [faviconAssetId], references: [id], onDelete: SetNull)
+  defaultOgImageAsset MediaAsset? @relation("ThemeDefaultOg", fields: [defaultOgImageAssetId], references: [id], onDelete: SetNull)
+
+  @@map("theme_settings")
+}
+
+model HomepageSection {
+  id           String    @id @default(cuid())
+  restaurantId String
+  sectionKey   String
+  isVisible    Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  layoutType   String?
+  status       CmsStatus @default(DRAFT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant    Restaurant                    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  translations  HomepageSectionTranslation[]
+  menuItems     HomepageSectionMenuItem[]
+  offers        HomepageSectionOffer[]
+  galleryImages HomepageSectionGalleryImage[]
+  reviews       HomepageSectionReview[]
+
+  @@unique([restaurantId, sectionKey])
+  @@index([restaurantId, isVisible, sortOrder])
+  @@map("homepage_sections")
+}
+
+model HomepageSectionTranslation {
+  id                String   @id @default(cuid())
+  homepageSectionId String
+  locale            Locale
+  title             String?
+  subtitle          String?
+  description       String?
+  buttonLabel       String?
+  buttonUrl         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  homepageSection HomepageSection @relation(fields: [homepageSectionId], references: [id], onDelete: Cascade)
+
+  @@unique([homepageSectionId, locale])
+  @@map("homepage_section_translations")
+}
+
+model HeroSlide {
+  id           String    @id @default(cuid())
+  restaurantId String
+  imageAssetId String?
+  isVisible    Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  status       CmsStatus @default(DRAFT)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant   Restaurant             @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  imageAsset   MediaAsset?            @relation("HeroImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  translations HeroSlideTranslation[]
+
+  @@index([restaurantId, status, isVisible, sortOrder])
+  @@map("hero_slides")
+}
+
+model HeroSlideTranslation {
+  id                   String   @id @default(cuid())
+  heroSlideId          String
+  locale               Locale
+  title                String?
+  subtitle             String?
+  primaryButtonLabel   String?
+  primaryButtonUrl     String?
+  secondaryButtonLabel String?
+  secondaryButtonUrl   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  heroSlide HeroSlide @relation(fields: [heroSlideId], references: [id], onDelete: Cascade)
+
+  @@unique([heroSlideId, locale])
+  @@map("hero_slide_translations")
+}
+
+model HomepageSectionMenuItem {
+  id                String @id @default(cuid())
+  homepageSectionId String
+  menuItemId        String
+  sortOrder         Int    @default(0)
+
+  homepageSection HomepageSection @relation(fields: [homepageSectionId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem        @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([homepageSectionId, menuItemId])
+  @@index([homepageSectionId, sortOrder])
+  @@map("homepage_section_menu_items")
+}
+
+model HomepageSectionOffer {
+  id                String @id @default(cuid())
+  homepageSectionId String
+  offerId           String
+  sortOrder         Int    @default(0)
+
+  homepageSection HomepageSection @relation(fields: [homepageSectionId], references: [id], onDelete: Cascade)
+  offer           Offer           @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([homepageSectionId, offerId])
+  @@index([homepageSectionId, sortOrder])
+  @@map("homepage_section_offers")
+}
+
+model HomepageSectionGalleryImage {
+  id                String @id @default(cuid())
+  homepageSectionId String
+  galleryImageId    String
+  sortOrder         Int    @default(0)
+
+  homepageSection HomepageSection @relation(fields: [homepageSectionId], references: [id], onDelete: Cascade)
+  galleryImage    GalleryImage    @relation(fields: [galleryImageId], references: [id], onDelete: Cascade)
+
+  @@unique([homepageSectionId, galleryImageId])
+  @@index([homepageSectionId, sortOrder])
+  @@map("homepage_section_gallery_images")
+}
+
+model HomepageSectionReview {
+  id                String @id @default(cuid())
+  homepageSectionId String
+  reviewId          String
+  sortOrder         Int    @default(0)
+
+  homepageSection HomepageSection @relation(fields: [homepageSectionId], references: [id], onDelete: Cascade)
+  review          Review          @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([homepageSectionId, reviewId])
+  @@index([homepageSectionId, sortOrder])
+  @@map("homepage_section_reviews")
+}
+
+model MenuCategory {
+  id               String    @id @default(cuid())
+  restaurantId     String
+  parentCategoryId String?
+  imageAssetId     String?
+  slug             String
+  isVisible        Boolean   @default(true)
+  sortOrder        Int       @default(0)
+  status           CmsStatus @default(DRAFT)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  restaurant      Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  parentCategory  MenuCategory?             @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  childCategories MenuCategory[]            @relation("CategoryHierarchy")
+  imageAsset      MediaAsset?               @relation("MenuCategoryImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  translations    MenuCategoryTranslation[]
+  menuItems       MenuItem[]
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId, status, isVisible, sortOrder])
+  @@map("menu_categories")
+}
+
+model MenuCategoryTranslation {
+  id             String   @id @default(cuid())
+  menuCategoryId String
+  locale         Locale
+  name           String
+  description    String?
+  slug           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  menuCategory MenuCategory @relation(fields: [menuCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([menuCategoryId, locale])
+  @@map("menu_category_translations")
+}
+
+model MenuItem {
+  id             String    @id @default(cuid())
+  restaurantId   String
+  menuCategoryId String
+  imageAssetId   String?
+  isAvailable    Boolean   @default(true)
+  isFeatured     Boolean   @default(false)
+  isVisible      Boolean   @default(true)
+  sortOrder      Int       @default(0)
+  status         CmsStatus @default(DRAFT)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  restaurant       Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuCategory     MenuCategory              @relation(fields: [menuCategoryId], references: [id], onDelete: Restrict)
+  imageAsset       MediaAsset?               @relation("MenuItemImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  translations     MenuItemTranslation[]
+  priceVariants    MenuItemPriceVariant[]
+  cookingMethods   MenuItemCookingMethod[]
+  homepageSections HomepageSectionMenuItem[]
+
+  @@index([restaurantId, menuCategoryId, status, isVisible, sortOrder])
+  @@index([restaurantId, isFeatured, isAvailable])
+  @@map("menu_items")
+}
+
+model MenuItemTranslation {
+  id          String   @id @default(cuid())
+  menuItemId  String
+  locale      Locale
+  name        String
+  description String?
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, locale])
+  @@map("menu_item_translations")
+}
+
+model MenuItemPriceVariant {
+  id         String   @id @default(cuid())
+  menuItemId String
+  price      Decimal  @db.Decimal(10, 2)
+  unit       MenuUnit
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  menuItem     MenuItem                          @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  translations MenuItemPriceVariantTranslation[]
+
+  @@index([menuItemId, isActive, sortOrder])
+  @@map("menu_item_price_variants")
+}
+
+model MenuItemPriceVariantTranslation {
+  id             String   @id @default(cuid())
+  priceVariantId String
+  locale         Locale
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  priceVariant MenuItemPriceVariant @relation(fields: [priceVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([priceVariantId, locale])
+  @@map("menu_item_price_variant_translations")
+}
+
+model CookingMethod {
+  id                String   @id @default(cuid())
+  restaurantId      String
+  isEnabled         Boolean  @default(true)
+  isPubliclyVisible Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  restaurant   Restaurant                 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  translations CookingMethodTranslation[]
+  menuItems    MenuItemCookingMethod[]
+
+  @@index([restaurantId, isEnabled, isPubliclyVisible, sortOrder])
+  @@map("cooking_methods")
+}
+
+model CookingMethodTranslation {
+  id              String   @id @default(cuid())
+  cookingMethodId String
+  locale          Locale
+  name            String
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  cookingMethod CookingMethod @relation(fields: [cookingMethodId], references: [id], onDelete: Cascade)
+
+  @@unique([cookingMethodId, locale])
+  @@map("cooking_method_translations")
+}
+
+model MenuItemCookingMethod {
+  id              String @id @default(cuid())
+  menuItemId      String
+  cookingMethodId String
+  sortOrder       Int    @default(0)
+
+  menuItem      MenuItem      @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  cookingMethod CookingMethod @relation(fields: [cookingMethodId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, cookingMethodId])
+  @@index([cookingMethodId])
+  @@map("menu_item_cooking_methods")
+}
+
+model Offer {
+  id           String    @id @default(cuid())
+  restaurantId String
+  imageAssetId String?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  isActive     Boolean   @default(true)
+  isFeatured   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  status       CmsStatus @default(DRAFT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant       Restaurant             @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  imageAsset       MediaAsset?            @relation("OfferImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  translations     OfferTranslation[]
+  homepageSections HomepageSectionOffer[]
+
+  @@index([restaurantId, status, isActive, isFeatured, sortOrder])
+  @@map("offers")
+}
+
+model OfferTranslation {
+  id          String   @id @default(cuid())
+  offerId     String
+  locale      Locale
+  title       String
+  description String?
+  ctaLabel    String?
+  ctaUrl      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([offerId, locale])
+  @@map("offer_translations")
+}
+
+model GalleryCategory {
+  id           String   @id @default(cuid())
+  restaurantId String
+  slug         String
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant   Restaurant                   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  translations GalleryCategoryTranslation[]
+  images       GalleryImage[]
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId, isActive, sortOrder])
+  @@map("gallery_categories")
+}
+
+model GalleryCategoryTranslation {
+  id                String   @id @default(cuid())
+  galleryCategoryId String
+  locale            Locale
+  name              String
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  galleryCategory GalleryCategory @relation(fields: [galleryCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([galleryCategoryId, locale])
+  @@map("gallery_category_translations")
+}
+
+model GalleryImage {
+  id                String    @id @default(cuid())
+  restaurantId      String
+  galleryCategoryId String?
+  mediaAssetId      String
+  isFeatured        Boolean   @default(false)
+  isVisible         Boolean   @default(true)
+  sortOrder         Int       @default(0)
+  status            CmsStatus @default(DRAFT)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  restaurant       Restaurant                    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  galleryCategory  GalleryCategory?              @relation(fields: [galleryCategoryId], references: [id], onDelete: SetNull)
+  mediaAsset       MediaAsset                    @relation("GalleryImageAsset", fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  translations     GalleryImageTranslation[]
+  homepageSections HomepageSectionGalleryImage[]
+
+  @@index([restaurantId, status, isVisible, isFeatured, sortOrder])
+  @@index([galleryCategoryId])
+  @@map("gallery_images")
+}
+
+model GalleryImageTranslation {
+  id             String   @id @default(cuid())
+  galleryImageId String
+  locale         Locale
+  caption        String?
+  altText        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  galleryImage GalleryImage @relation(fields: [galleryImageId], references: [id], onDelete: Cascade)
+
+  @@unique([galleryImageId, locale])
+  @@map("gallery_image_translations")
+}
+
+model SeoEntry {
+  id                 String              @id @default(cuid())
+  restaurantId       String
+  entityType         SeoEntityType
+  entityId           String?
+  routePath          String
+  canonicalPath      String?
+  ogImageAssetId     String?
+  robotsIndex        Boolean             @default(true)
+  robotsFollow       Boolean             @default(true)
+  structuredDataType StructuredDataType?
+  isSitemapIncluded  Boolean             @default(true)
+  priority           Decimal?            @db.Decimal(2, 1)
+  changeFrequency    ChangeFrequency?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  restaurant   Restaurant            @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  ogImageAsset MediaAsset?           @relation("SeoOgImage", fields: [ogImageAssetId], references: [id], onDelete: SetNull)
+  translations SeoEntryTranslation[]
+
+  @@unique([restaurantId, routePath])
+  @@index([restaurantId, entityType, entityId])
+  @@index([restaurantId, isSitemapIncluded])
+  @@map("seo_entries")
+}
+
+model SeoEntryTranslation {
+  id             String   @id @default(cuid())
+  seoEntryId     String
+  locale         Locale
+  seoTitle       String
+  seoDescription String?
+  ogTitle        String?
+  ogDescription  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  seoEntry SeoEntry @relation(fields: [seoEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([seoEntryId, locale])
+  @@map("seo_entry_translations")
+}
+
+model Review {
+  id             String               @id @default(cuid())
+  restaurantId   String
+  customerName   String
+  email          String
+  phone          String?
+  rating         Int
+  title          String?
+  comment        String
+  imageAssetId   String?
+  status         ReviewStatus         @default(PENDING)
+  isFeatured     Boolean              @default(false)
+  publicNameMode PublicReviewNameMode @default(SHORTENED)
+  approvedById   String?
+  approvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  restaurant       Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  imageAsset       MediaAsset?             @relation("ReviewImage", fields: [imageAssetId], references: [id], onDelete: SetNull)
+  approvedBy       User?                   @relation("ApprovedReviews", fields: [approvedById], references: [id], onDelete: SetNull)
+  homepageSections HomepageSectionReview[]
+
+  @@index([restaurantId, status, isFeatured, createdAt])
+  @@map("reviews")
+}
+
+model ContactMessage {
+  id              String        @id @default(cuid())
+  restaurantId    String
+  name            String
+  phoneOrWhatsapp String
+  email           String?
+  subject         String
+  message         String
+  status          MessageStatus @default(NEW)
+  readAt          DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, status, createdAt])
+  @@map("contact_messages")
+}
+
+model Reservation {
+  id              String            @id @default(cuid())
+  restaurantId    String
+  name            String
+  phone           String
+  email           String?
+  reservationDate DateTime
+  reservationTime String
+  guests          Int
+  notes           String?
+  status          ReservationStatus @default(PENDING)
+  handledById     String?
+  handledAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  handledBy  User?      @relation("HandledReservations", fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, status, reservationDate])
+  @@map("reservations")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  restaurantId  String
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  passwordHash  String
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  restaurant          Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  uploadedMedia       MediaAsset[]  @relation("UploadedMedia")
+  approvedReviews     Review[]      @relation("ApprovedReviews")
+  handledReservations Reservation[] @relation("HandledReservations")
+  sessions            UserSession[]
+  authSessions        Session[]
+  accounts            Account[]
+  userRoles           UserRole[]
+  auditLogs           AuditLog[]
+
+  @@unique([restaurantId, email])
+  @@index([restaurantId, isActive])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+model Role {
+  id           String   @id @default(cuid())
+  restaurantId String?
+  name         String
+  description  String?
+  isSystemRole Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant      Restaurant?      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId, isSystemRole])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  group       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([group])
+  @@map("permissions")
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserSession {
+  id               String    @id @default(cuid())
+  userId           String
+  sessionTokenHash String    @unique
+  expiresAt        DateTime
+  ipAddress        String?
+  userAgent        String?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("user_sessions")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  restaurantId String
+  userId       String?
+  action       String
+  entityType   String
+  entityId     String?
+  metadata     Json?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, entityType, entityId])
+  @@index([restaurantId, createdAt])
+  @@map("audit_logs")
+}
