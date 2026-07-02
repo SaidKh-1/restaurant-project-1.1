@@ -248,6 +248,65 @@ export type ContactMessageData = {
   updatedAt: string;
 };
 
+export type HomepageSectionTranslation = {
+  title: string | null;
+  subtitle: string | null;
+};
+
+export type HomepageSectionData = {
+  id: string;
+  sectionKey: string;
+  isVisible: boolean;
+  sortOrder: number;
+  layoutType: string | null;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  defaultLocale: "ar";
+  translations: {
+    ar: HomepageSectionTranslation | null;
+    en: HomepageSectionTranslation | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ThemeSettingsData = {
+  id: string;
+  isActive: boolean;
+  activePresetKey:
+    | "ocean-blue"
+    | "navy-dark"
+    | "emerald"
+    | "sunset"
+    | "luxury-dark"
+    | "golden"
+    | "ramadan"
+    | "eid-al-fitr"
+    | "eid-al-adha"
+    | "custom"
+    | null;
+  colors: {
+    primaryColor: string | null;
+    secondaryColor: string | null;
+    buttonColor: string | null;
+    headerColor: string | null;
+    footerColor: string | null;
+    backgroundColor: string | null;
+    textColor: string | null;
+  };
+  coverImage: MediaAssetSummary | null;
+  logo: MediaAssetSummary | null;
+  favicon: MediaAssetSummary | null;
+  seasonalGreeting: {
+    ar: string | null;
+    en: string | null;
+  };
+  restaurantName: {
+    ar: string | null;
+    en: string | null;
+  };
+  updatedAt: string;
+};
+
 export type ReservationData = {
   id: string;
   name: string;

@@ -48,9 +48,8 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       {
         title: "إدارة الصفحة الرئيسية",
+        href: "/admin/homepage",
         icon: Home,
-        disabled: true,
-        badge: "قريباً",
         permission: "homepage.manage",
       },
       {
@@ -115,9 +114,8 @@ export const adminNavGroups: AdminNavGroup[] = [
       },
       {
         title: "إدارة المظهر",
+        href: "/admin/theme",
         icon: Palette,
-        disabled: true,
-        badge: "قريباً",
         permission: "theme.manage",
       },
       {

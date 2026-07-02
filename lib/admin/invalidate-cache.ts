@@ -6,6 +6,8 @@ export const ADMIN_API_CACHE = {
   settingsSummary: "/api/admin/restaurant-settings/summary",
   media: "/api/admin/media",
   hero: "/api/admin/hero-slides",
+  homepage: "/api/admin/homepage-sections",
+  theme: "/api/admin/theme",
   offers: "/api/admin/offers",
   menuItems: "/api/admin/menu-items",
   menuCategories: "/api/admin/menu-categories",
